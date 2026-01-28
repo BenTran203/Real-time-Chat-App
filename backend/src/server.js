@@ -41,34 +41,47 @@ try {
       credentials: true,
     },
   });
-  console.log("✅ Socket.io server created!");
+  console.log("Socket.io server created!");
 
   // Setup Socket.io handlers immediately after creation
   setupSocketHandlers(io);
   setupPresenceHandlers(io);
-  console.log("✅ Socket.io handlers ready!");
+  console.log("Socket.io handlers ready!");
 } catch (error) {
-  console.error("❌ Failed to setup Socket.io:", error);
-  console.warn("⚠️  Real-time messaging will NOT work");
+  console.error("Failed to setup Socket.io:", error);
+  console.warn(" Real-time messaging will NOT work");
 }
 
 try {
   startServerCodeCron();
-  console.log("✅ Server code regeneration cron job started");
+  console.log("Server code regeneration cron job started");
 } catch (error) {
-  console.error("❌ Failed to start cron jobs:", error);
+  console.error(" Failed to start cron jobs:", error);
 }
 
-// ============================================
-// MIDDLEWARE
-// ============================================
-
 // CORS
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+  : ["http://localhost:5173"];
+
+console.log("Allowed CORS origins:", allowedOrigins);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️  CORS blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-  })
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 
 // Parse JSON bodies
