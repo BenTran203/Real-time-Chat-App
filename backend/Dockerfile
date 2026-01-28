@@ -55,7 +55,7 @@ COPY src ./src/
 EXPOSE 5000
 
 # Run migrations and start the server
-CMD sh -c "npx prisma migrate deploy && node src/server.js"
+CMD sh -c "npx prisma migrate deploy && npx prisma db seed && node src/server.js"
 
 # ============================================
 # ENVIRONMENT VARIABLES (set via .env or docker-compose)

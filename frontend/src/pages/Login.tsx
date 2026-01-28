@@ -79,7 +79,16 @@ export function Login() {
       <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
-
+      
+      {/* Mock Account Info */}
+      <div className="absolute top-10 left-10 bg-nature-stone/20 dark:bg-nature-bark/30 backdrop-blur-sm border-2 border-nature-bark/20 dark:border-nature-stone/20 rounded-xl p-10  shadow-lg">
+        <p className="font-pixel text-m text-black dark:text-nature-stone leading-relaxed">
+          <span className="block mb-2 text-m">Test Account</span>
+          <span className="block">Email: Testing@test.com</span>
+          <span className="block">Password: 12345689</span>
+        </p>
+      </div>
+      
       <Card className="w-full max-w-md animate-pop-in relative z-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-grass-100 dark:bg-grass-900/30 rounded-2xl mb-4 animate-bounce-gentle">
