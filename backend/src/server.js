@@ -34,14 +34,21 @@ let io;
 
 try {
   console.log("Creating Socket.io server...");
+  
+  const socketOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+    : ["http://localhost:5173"];
+  
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
+      origin: socketOrigins,
       methods: ["GET", "POST"],
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
     },
   });
   console.log("Socket.io server created!");
+  console.log("Socket.io allowed origins:", socketOrigins);
 
   // Setup Socket.io handlers immediately after creation
   setupSocketHandlers(io);
@@ -74,13 +81,17 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.warn(`⚠️  CORS blocked origin: ${origin}`);
+        console.warn(` CORS blocked origin: ${origin}`);
+        console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Authorization"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   }),
 );
 
@@ -158,11 +169,11 @@ const startServer = async () => {
     await connectDatabase();
 
     httpServer.listen(PORT, () => {
-      console.log(`\n🚀 Server is running at ${PORT}`);
+      console.log(`\n Server is running at ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };
@@ -174,16 +185,16 @@ const gracefulShutdown = async (signal) => {
     await prisma.$disconnect();
     console.log("Database disconnected");
   } catch (error) {
-    console.error("⚠️  Database disconnect failed:", error);
+    console.error("Database disconnect failed:", error);
   }
 
   httpServer.close(() => {
-    console.log("✅ Server closed");
+    console.log("Server closed");
     process.exit(0);
   });
 
   setTimeout(() => {
-    console.error("❌ Forced shutdown after timeout");
+    console.error(" Forced shutdown after timeout");
     process.exit(1);
   }, 10000);
 };
