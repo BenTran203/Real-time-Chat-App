@@ -59,12 +59,16 @@ try {
   console.warn(" Real-time messaging will NOT work");
 }
 
-try {
-  startServerCodeCron();
-  console.log("Server code regeneration cron job started");
-} catch (error) {
-  console.error(" Failed to start cron jobs:", error);
-}
+// Start cron jobs (non-blocking - don't let this prevent server startup)
+setTimeout(() => {
+  try {
+    startServerCodeCron();
+    console.log("⏰ Server code regeneration cron job started");
+  } catch (error) {
+    console.error("⚠️ Failed to start cron jobs:", error.message);
+    // Don't crash the server for cron failures
+  }
+}, 5000); // Delay cron startup by 5 seconds
 
 // CORS
 const allowedOrigins = process.env.FRONTEND_URL
@@ -117,17 +121,32 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// ROUTES
+// HEALTH CHECK (Before other routes for fast response)
 // ============================================
 
-// Health check endpoint
+// Health check endpoint - Railway uses this to verify the app is running
+// Keep this BEFORE other middleware to ensure fast response
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
   });
 });
+
+// Root endpoint for basic connectivity check
+app.get("/", (req, res) => {
+  res.json({
+    message: "🌿 ChatWave API is running",
+    version: "1.0.0",
+    healthCheck: "/health",
+  });
+});
+
+// ============================================
+// ROUTES
+// ============================================
 
 // API Routes
 app.use("/api/auth", limiter, authRoutes); //Apply limter to authentication
@@ -149,11 +168,31 @@ app.use(errorHandler);
 // ============================================
 
 const connectDatabase = async () => {
+  console.log("🔌 Connecting to database...");
+  
+  // Add timeout for database connection (15 seconds)
+  const connectionTimeout = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("Database connection timeout")), 15000);
+  });
+
   try {
-    await prisma.$connect();
-    console.log("Database connected successfully");
+    // Race between connection and timeout
+    await Promise.race([
+      prisma.$connect(),
+      connectionTimeout
+    ]);
+    console.log("✅ Database connected successfully");
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("❌ Database connection failed:", error.message);
+    
+    // Log helpful hints
+    if (error.message.includes("timeout")) {
+      console.error("💡 Hint: Check if DATABASE_URL is correct and database is accessible");
+    }
+    if (error.message.includes("ECONNREFUSED")) {
+      console.error("💡 Hint: Database server may not be running");
+    }
+    
     process.exit(1);
   }
 };
@@ -164,13 +203,20 @@ const connectDatabase = async () => {
 
 const PORT = process.env.PORT || 5000;
 
+// IMPORTANT: Bind to 0.0.0.0 for cloud deployments (Railway, Render, etc.)
+// - '0.0.0.0' accepts connections from any network interface
+// - 'localhost' or '127.0.0.1' only accepts local connections
+// - Cloud proxies connect from external IPs, so 0.0.0.0 is required
+const HOST = '0.0.0.0';
+
 const startServer = async () => {
   try {
     await connectDatabase();
 
-    httpServer.listen(PORT, () => {
-      console.log(`\n Server is running at ${PORT}`);
+    httpServer.listen(PORT, HOST, () => {
+      console.log(`\n🚀 Server is running at http://${HOST}:${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`📡 Accepting connections from all interfaces`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

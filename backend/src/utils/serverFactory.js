@@ -1,32 +1,15 @@
 import { createServer } from "http";
-import { createServer as createHttpsServer } from "https";
-import fs from "fs";
-import path from "path";
 
 /**
- * Creates an HTTP or HTTPS server based on environment
+ * Creates an HTTP server
+ * 
+ * NOTE: For cloud deployments (Railway, Render, Heroku, etc.),
+ * ALWAYS use HTTP. The cloud provider handles SSL/HTTPS termination
+ * at the proxy level. Your app receives HTTP from the proxy.
+ * 
  * @param {Express.Application} app
  */
-
 export const createWebServer = (app) => {
-  let httpServer;
-  const useHttps =
-    process.env.NODE_ENV === "production" || process.env.USE_HTTPS === "true";
-  if (useHttps) {
-    try {
-      const httpsOptions = {
-        key: fs.readFileSync(path.join(process.cwd(), "certs", "key.pem")),
-        cert: fs.readFileSync(path.join(process.cwd(), "certs", "cert.pem")),
-      };
-      httpServer = createHttpsServer(httpsOptions, app);
-      console.log("HTTPS server created");
-    } catch (error) {
-      console.error("HTTPS certificates not found, using HTTP instead");
-      httpServer = createServer(app);
-    }
-  } else {
-    console.log("🌐 HTTP server created");
-    httpServer = createServer(app);
-  }
-  return httpServer;
+  console.log("🌐 HTTP server created");
+  return createServer(app);
 };
