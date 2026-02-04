@@ -44,20 +44,20 @@ COPY package*.json ./
 # Copy prisma schema BEFORE npm ci (needed for postinstall hook)
 COPY prisma ./prisma/
 
-# Install dependencies (postinstall will run prisma generate)
-RUN npm ci --omit=dev
+# Install ALL dependencies (prisma is now in dependencies, not devDependencies)
+RUN npm ci
 
-# Install prisma globally for migrations
-# RUN npm install -g prisma
-
-# Copy prisma schema and migrations
-# COPY prisma ./prisma/
-# RUN npx prisma generate
+# Explicitly generate Prisma client (belt and suspenders approach)
+RUN npx prisma generate
 
 # Copy source code
 COPY src ./src/
 
 EXPOSE 5000
+
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
 
 # Run migrations and start the server
 CMD ["node", "src/server.js"]
