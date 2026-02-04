@@ -34,21 +34,20 @@ let io;
 
 try {
   console.log("Creating Socket.io server...");
-
-  const socketOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-    : ["http://localhost:5173"];
+  console.log("⚠️  WARNING: Socket.io CORS set to allow ALL origins (testing mode)");
+  // const socketOrigins = process.env.FRONTEND_URL
+  //   ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+  //   : ["http://localhost:5173"];
 
   io = new Server(httpServer, {
     cors: {
-      origin: socketOrigins,
+      origin: true, // Allow ALL origins for testing
       methods: ["GET", "POST"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
     },
   });
   console.log("Socket.io server created!");
-  console.log("Socket.io allowed origins:", socketOrigins);
 
   // Setup Socket.io handlers immediately after creation
   setupSocketHandlers(io);
@@ -77,6 +76,8 @@ setTimeout(() => {
 
 // console.log("Allowed CORS origins:", allowedOrigins);
 
+console.log("⚠️  WARNING: Express CORS set to allow ALL origins (testing mode)");
+
 app.use(
   cors({
     // origin: function (origin, callback) {
@@ -99,6 +100,9 @@ app.use(
     optionsSuccessStatus: 204,
   }),
 );
+
+// Explicitly handle OPTIONS for all routes (preflight requests)
+app.options('*', cors());
 
 // Parse JSON bodies
 app.use(express.json());
