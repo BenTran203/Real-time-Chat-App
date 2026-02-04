@@ -71,25 +71,26 @@ setTimeout(() => {
 }, 5000); // Delay cron startup by 5 seconds
 
 // CORS
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  : ["http://localhost:5173"];
+// const allowedOrigins = process.env.FRONTEND_URL
+//   ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+//   : ["http://localhost:5173"];
 
-console.log("Allowed CORS origins:", allowedOrigins);
+// console.log("Allowed CORS origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+    // origin: function (origin, callback) {
+    //   if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(` CORS blocked origin: ${origin}`);
-        console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    //   if (allowedOrigins.includes(origin)) {
+    //     callback(null, true);
+    //   } else {
+    //     console.warn(` CORS blocked origin: ${origin}`);
+    //     console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
+    //     callback(new Error("Not allowed by CORS"));
+    //   }
+    // },
+    origin: true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
