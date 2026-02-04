@@ -57,8 +57,9 @@ COPY src ./src/
 EXPOSE 5000
 
 # Health check for container orchestration
+# Use PORT env if provided (Railway sets PORT)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
+  CMD sh -c "wget --no-verbose --tries=1 --spider http://localhost:${PORT:-5000}/health || exit 1"
 
 # Run migrations and start the server
 CMD ["node", "src/server.js"]
