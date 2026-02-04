@@ -45,10 +45,10 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install dependencies (postinstall will run prisma generate)
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Install prisma globally for migrations
-RUN npm install -g prisma
+# RUN npm install -g prisma
 
 # Copy prisma schema and migrations
 # COPY prisma ./prisma/
@@ -60,7 +60,7 @@ COPY src ./src/
 EXPOSE 5000
 
 # Run migrations and start the server
-CMD sh -c "npx prisma migrate deploy && npx prisma db seed && node src/server.js"
+CMD ["node", "src/server.js"]
 
 # ============================================
 # ENVIRONMENT VARIABLES (set via .env or docker-compose)
