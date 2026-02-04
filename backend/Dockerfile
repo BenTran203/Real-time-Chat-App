@@ -40,14 +40,19 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# Copy prisma schema BEFORE npm ci (needed for postinstall hook)
+COPY prisma ./prisma/
+
+# Install dependencies (postinstall will run prisma generate)
 RUN npm ci
 
 # Install prisma globally for migrations
 RUN npm install -g prisma
 
 # Copy prisma schema and migrations
-COPY prisma ./prisma/
-RUN npx prisma generate
+# COPY prisma ./prisma/
+# RUN npx prisma generate
 
 # Copy source code
 COPY src ./src/
