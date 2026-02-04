@@ -34,22 +34,14 @@ let io;
 
 try {
   console.log("Creating Socket.io server...");
-  
-  const socketOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-    : ["http://localhost:5173"];
-  
-  console.log("Socket.io allowed origins:", socketOrigins);
 
   io = new Server(httpServer, {
     cors: {
-      origin: socketOrigins,
+      origin: "*",  // Allow ALL origins
       methods: ["GET", "POST"],
-      credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization"],
     },
   });
-  console.log("Socket.io server created!");
+  console.log("✅ Socket.io server created (CORS: allow all)");
 
   // Setup Socket.io handlers immediately after creation
   setupSocketHandlers(io);
@@ -71,34 +63,15 @@ setTimeout(() => {
   }
 }, 5000); // Delay cron startup by 5 seconds
 
-// CORS Configuration
-const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  : ["http://localhost:5173"];
+// ============================================
+// CORS - Allow ALL origins (simplified)
+// ============================================
+console.log("✅ CORS: Allowing ALL origins");
 
-console.log("Allowed CORS origins:", allowedOrigins);
+app.use(cors());  // Simple! Allows everything
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(` CORS blocked origin: ${origin}`);
-        console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    exposedHeaders: ["Authorization"],
-    optionsSuccessStatus: 204,
-  }),
-);
+// Handle preflight requests for all routes
+app.options("*", cors());
 
 // Parse JSON bodies
 app.use(express.json());
