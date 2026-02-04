@@ -34,14 +34,16 @@ let io;
 
 try {
   console.log("Creating Socket.io server...");
-  console.log("⚠️  WARNING: Socket.io CORS set to allow ALL origins (testing mode)");
-  // const socketOrigins = process.env.FRONTEND_URL
-  //   ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-  //   : ["http://localhost:5173"];
+  
+  const socketOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+    : ["http://localhost:5173"];
+  
+  console.log("Socket.io allowed origins:", socketOrigins);
 
   io = new Server(httpServer, {
     cors: {
-      origin: true, // Allow ALL origins for testing
+      origin: socketOrigins,
       methods: ["GET", "POST"],
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
@@ -69,40 +71,34 @@ setTimeout(() => {
   }
 }, 5000); // Delay cron startup by 5 seconds
 
-// CORS
-// const allowedOrigins = process.env.FRONTEND_URL
-//   ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-//   : ["http://localhost:5173"];
+// CORS Configuration
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+  : ["http://localhost:5173"];
 
-// console.log("Allowed CORS origins:", allowedOrigins);
-
-console.log("⚠️  WARNING: Express CORS set to allow ALL origins (testing mode)");
+console.log("Allowed CORS origins:", allowedOrigins);
 
 app.use(
   cors({
-    // origin: function (origin, callback) {
-    //   if (!origin) return callback(null, true);
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
 
-    //   if (allowedOrigins.includes(origin)) {
-    //     callback(null, true);
-    //   } else {
-    //     console.warn(` CORS blocked origin: ${origin}`);
-    //     console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
-    //     callback(new Error("Not allowed by CORS"));
-    //   }
-    // },
-    origin: true,
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(` CORS blocked origin: ${origin}`);
+        console.warn(`   Expected one of: ${allowedOrigins.join(", ")}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     exposedHeaders: ["Authorization"],
-    preflightContinue: false,
     optionsSuccessStatus: 204,
   }),
 );
-
-// Explicitly handle OPTIONS for all routes (preflight requests)
-app.options('*', cors());
 
 // Parse JSON bodies
 app.use(express.json());
