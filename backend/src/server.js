@@ -35,9 +35,7 @@ let io;
 try {
   console.log("Creating Socket.io server...");
   
-  const socketOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
-    : ["http://localhost:5173"];
+  const socketOrigins = process.env.FRONTEND_URL || "http://localhost:5173";
   
   io = new Server(httpServer, {
     cors: {
