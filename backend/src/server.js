@@ -34,9 +34,11 @@ let io;
 
 try {
   console.log("Creating Socket.io server...");
-  
-  const socketOrigins = process.env.FRONTEND_URL || "http://localhost:5173";
-  
+
+  const socketOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+    : ["http://localhost:5173"];
+
   io = new Server(httpServer, {
     cors: {
       origin: socketOrigins,
@@ -167,7 +169,7 @@ app.use(errorHandler);
 
 const connectDatabase = async () => {
   console.log("🔌 Connecting to database...");
-  
+
   // Add timeout for database connection (15 seconds)
   const connectionTimeout = new Promise((_, reject) => {
     setTimeout(() => reject(new Error("Database connection timeout")), 15000);
@@ -175,22 +177,21 @@ const connectDatabase = async () => {
 
   try {
     // Race between connection and timeout
-    await Promise.race([
-      prisma.$connect(),
-      connectionTimeout
-    ]);
+    await Promise.race([prisma.$connect(), connectionTimeout]);
     console.log("✅ Database connected successfully");
   } catch (error) {
     console.error("❌ Database connection failed:", error.message);
-    
+
     // Log helpful hints
     if (error.message.includes("timeout")) {
-      console.error("💡 Hint: Check if DATABASE_URL is correct and database is accessible");
+      console.error(
+        "💡 Hint: Check if DATABASE_URL is correct and database is accessible",
+      );
     }
     if (error.message.includes("ECONNREFUSED")) {
       console.error("💡 Hint: Database server may not be running");
     }
-    
+
     process.exit(1);
   }
 };
@@ -205,7 +206,7 @@ const PORT = process.env.PORT || 5000;
 // - '0.0.0.0' accepts connections from any network interface
 // - 'localhost' or '127.0.0.1' only accepts local connections
 // - Cloud proxies connect from external IPs, so 0.0.0.0 is required
-const HOST = '0.0.0.0';
+const HOST = "0.0.0.0";
 
 const startServer = async () => {
   try {
