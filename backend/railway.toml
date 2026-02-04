@@ -3,11 +3,13 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && node src/server.js"
+# Run migrations, attempt seed (non-fatal), then start server
+# Use sh -c to ensure command chaining works in Railway
+startCommand = "sh -c \"npx prisma migrate deploy && (npx prisma db seed || echo 'Seed skipped') && node src/server.js\""
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
 [healthcheck]
 path = "/health"
-timeout = 30
-interval = 10
+timeout = 60
+interval = 15

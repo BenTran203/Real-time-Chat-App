@@ -14,11 +14,12 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm install
 
-# Copy prisma schema for generation
+# Copy prisma schema BEFORE npm install (postinstall runs prisma generate)
 COPY prisma ./prisma/
-RUN npx prisma generate
+
+# Install dependencies (postinstall will run prisma generate)
+RUN npm install
 
 # Copy source code
 COPY src ./src/
@@ -40,13 +41,14 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# Copy prisma schema BEFORE npm ci (needed for postinstall hook)
+COPY prisma ./prisma/
+
+# Install ALL dependencies (prisma is now in dependencies, not devDependencies)
 RUN npm ci
 
-# Install prisma globally for migrations
-RUN npm install -g prisma
-
-# Copy prisma schema and migrations
-COPY prisma ./prisma/
+# Explicitly generate Prisma client (belt and suspenders approach)
 RUN npx prisma generate
 
 # Copy source code
@@ -54,8 +56,13 @@ COPY src ./src/
 
 EXPOSE 5000
 
+# Health check for container orchestration
+# Use PORT env if provided (Railway sets PORT)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD sh -c "wget --no-verbose --tries=1 --spider http://localhost:${PORT:-5000}/health || exit 1"
+
 # Run migrations and start the server
-CMD sh -c "npx prisma migrate deploy && npx prisma db seed && node src/server.js"
+CMD ["node", "src/server.js"]
 
 # ============================================
 # ENVIRONMENT VARIABLES (set via .env or docker-compose)

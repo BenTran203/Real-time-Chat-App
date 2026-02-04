@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "build": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
@@ -25,6 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "prisma": "^6.19.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -40,7 +43,6 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "prisma": "^6.19.0"
+    "nodemon": "^3.0.2"
   }
 }

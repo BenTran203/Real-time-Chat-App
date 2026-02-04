@@ -3,12 +3,27 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend only if API key is provided
+let resend = null;
+
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+  console.log("Email service (Resend) initialized");
+} else {
+  console.warn("RESEND_API_KEY not set - email features will be disabled");
+}
 
 /**
  * Send email verification link to new users
  */
 export const sendVerificationEmail = async (email, username, verificationToken) => {
+  // Skip if email service not configured
+  if (!resend) {
+    console.warn(" Email service not configured - skipping verification email");
+    console.log(`[DEV] Verification link for ${email}: ${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`);
+    return { skipped: true };
+  }
+
   const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
   try {
@@ -68,6 +83,13 @@ export const sendVerificationEmail = async (email, username, verificationToken) 
  * Send password reset email
  */
 export const resetPasswordEmail = async (email, resetToken) => {
+  // Skip if email service not configured
+  if (!resend) {
+    console.warn("Email service not configured - skipping reset email");
+    console.log(`[DEV] Reset link for ${email}: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`);
+    return { skipped: true };
+  }
+
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
   try {
